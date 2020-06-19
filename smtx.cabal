@@ -1,0 +1,130 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.33.0.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: 4326dbb87cbb77cbd0701f1e9a04bab3532f746cde20e226b8ecd559571dea7c
+
+name:           smtx
+version:        0.2.0.0
+synopsis:       My first SMT solver
+description:    Please see the README on GitHub at <https://github.com/itnef/smtx#readme>
+category:       Logic
+homepage:       https://github.com/itnef/smtx#readme
+bug-reports:    https://github.com/itnef/smtx/issues
+author:         Nils Erik Flick
+maintainer:     0xF82D66B403A3E1E5
+copyright:      2020 Nils Erik Flick
+license:        GPL-3
+license-file:   LICENSE
+build-type:     Simple
+extra-source-files:
+    README.md
+    ChangeLog.md
+
+source-repository head
+  type: git
+  location: https://github.com/itnef/smtx
+
+library
+  exposed-modules:
+      Convenience
+      DebugOutput.GoDot
+      DebugOutput.PPrint
+      MySMT
+      MySMT.BoolTransform
+      MySMT.Core
+      MySMT.DataTypes
+      MySMT.DataTypes.Solver
+      MySMT.Input.FileRead
+      MySMT.Input.Input
+      MySMT.Output.PPrintInstances
+      MySMT.Theories.EqUF
+      MySMT.Theories.EqUF.Graphs
+      MySMT.TheoryCombination
+      Util
+  other-modules:
+      Paths_smtx
+  hs-source-dirs:
+      src
+  build-depends:
+      base >=4.7 && <5
+    , bytestring
+    , containers
+    , mtl
+    , random
+    , strict
+    , transformers
+  default-language: Haskell2010
+
+executable smtx
+  main-is: Main.hs
+  other-modules:
+      Paths_smtx
+  hs-source-dirs:
+      app
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N -rtsopts -fwarn-missing-signatures -Wall -O2 -fexcess-precision -optc-O3 -optc-ffast-math -funbox-strict-fields
+  build-depends:
+      ansi-terminal
+    , base >=4.7 && <5
+    , bytestring
+    , containers
+    , mtl
+    , optparse-applicative
+    , random
+    , smtx
+    , strict
+    , transformers
+  default-language: Haskell2010
+
+test-suite smtx-test
+  type: exitcode-stdio-1.0
+  main-is: Tests.hs
+  other-modules:
+      LargeExamples
+      TestBoolTransform
+      TestEqUF
+      Paths_smtx
+  hs-source-dirs:
+      test
+  ghc-options: -main-is Tests -threaded -rtsopts -with-rtsopts=-N -rtsopts -Wall -fhpc
+  build-depends:
+      HUnit
+    , QuickCheck
+    , base >=4.7 && <5
+    , bytestring
+    , containers
+    , mtl
+    , random
+    , smallcheck
+    , smtx
+    , strict
+    , tasty
+    , tasty-hunit
+    , tasty-quickcheck
+    , tasty-smallcheck
+    , transformers
+  default-language: Haskell2010
+
+benchmark bench
+  type: exitcode-stdio-1.0
+  main-is: Bench.hs
+  other-modules:
+      Paths_smtx
+  hs-source-dirs:
+      bench
+  ghc-options: -main-is Bench -threaded -rtsopts -with-rtsopts=-N -rtsopts -fwarn-missing-signatures -Wall -fprof-auto -O2 -fexcess-precision -optc-O3 -optc-ffast-math -funbox-strict-fields
+  build-depends:
+      ansi-terminal
+    , base >=4.7 && <5
+    , bytestring
+    , containers
+    , criterion
+    , mtl
+    , optparse-applicative
+    , random
+    , smtx
+    , strict
+    , transformers
+  default-language: Haskell2010
