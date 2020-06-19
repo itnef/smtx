@@ -1,0 +1,94 @@
+name:                smtx
+version:             0.2.0.0
+github:              "itnef/smtx"
+license:             GPL-3
+author:              "Nils Erik Flick"
+maintainer:          "0xF82D66B403A3E1E5"
+copyright:           "2020 Nils Erik Flick"
+
+extra-source-files:
+- README.md
+- ChangeLog.md
+
+# Metadata used when publishing your package
+synopsis:            My first SMT solver
+category:            Logic
+
+# To avoid duplicated efforts in documentation and dealing with the
+# complications of embedding Haddock markup inside cabal files, it is
+# common to point users to the README.md file.
+description:         Please see the README on GitHub at <https://github.com/itnef/smtx#readme>
+
+dependencies:
+- base >= 4.7 && < 5
+- transformers
+- containers
+- strict
+- mtl
+- random
+- bytestring
+
+library:
+  source-dirs: src
+
+executables:
+  smtx:
+    main:                Main.hs
+    source-dirs:         app
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    - -rtsopts -fwarn-missing-signatures -Wall
+    - -O2
+    - -fexcess-precision
+    - -optc-O3
+    - -optc-ffast-math
+    - -funbox-strict-fields
+    dependencies:
+    - smtx
+    - ansi-terminal
+    - optparse-applicative
+
+benchmarks:
+  bench:
+    main:                 Bench.hs
+    source-dirs:          bench
+    ghc-options:
+    - -main-is Bench
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    - -rtsopts -fwarn-missing-signatures -Wall
+    - -fprof-auto
+    - -O2
+    - -fexcess-precision
+    - -optc-O3
+    - -optc-ffast-math
+    - -funbox-strict-fields
+    dependencies:
+    - smtx
+    - ansi-terminal
+    - optparse-applicative
+    - criterion
+
+tests:
+  smtx-test:
+    main:                Tests.hs
+    source-dirs:         test
+    ghc-options:
+    - -main-is Tests
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    - -rtsopts -Wall
+    - -fhpc
+    dependencies:
+    - smtx
+    - tasty
+    - tasty-hunit
+    - tasty-quickcheck
+    - tasty-smallcheck
+    - QuickCheck
+    - smallcheck
+    - HUnit

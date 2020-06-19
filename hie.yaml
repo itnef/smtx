@@ -1,0 +1,16 @@
+cradle:
+  stack:
+# doesn't work (try newer version?)
+    - path: "./src"
+      component: "smtx:lib"
+    - path: "./app"
+      component: "smtx:exe:smtx"
+    - path: "./bench"
+      component: "smtx:bench:bench"
+    - path: "./test"
+      component: "smtx:test:smtx-test"
+
+# dependencies:
+#   - optparse-applicative
+#   - ansi-terminal
+#   - criterion
