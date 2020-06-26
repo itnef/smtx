@@ -1,20 +1,20 @@
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 {-# LANGUAGE RankNTypes #-}
-{-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE StrictData #-}
 {-# LANGUAGE LambdaCase, FlexibleContexts #-}
 
 module MySMT.Theories.EqUF.Graphs where
 
 import Prelude hiding (pred, succ)
 
-import Data.IntMap as IM (IntMap)
+import Data.IntMap.Strict as IM (IntMap)
 import Data.IntSet as IS (IntSet)
-import Data.Map as M (Map)
+import Data.Map.Strict as M (Map)
 import Data.Set as S (Set)
 
-import qualified Data.IntMap as IM
+import qualified Data.IntMap.Strict as IM
 import qualified Data.IntSet as IS
-import qualified Data.Map as M
+import qualified Data.Map.Strict as M
 import qualified Data.Set as S
 
 import Control.Arrow (second, (***))
@@ -23,13 +23,13 @@ import MySMT.DataTypes
 
 data RGraph a =
     RGraph {
-        ixmax :: Int,
-        base  :: Map a Int,
-        succ  :: IntMap [Int],
-        pred  :: IntMap NodeIndexSet,
-        nf    :: IntMap Int,
-        lbl   :: IntMap a,
-        dl    :: IntMap NodeLevel
+        ixmax :: !Int,
+        base  :: !(Map a Int),
+        succ  :: !(IntMap [Int]),
+        pred  :: !(IntMap NodeIndexSet),
+        nf    :: !(IntMap Int),
+        lbl   :: !(IntMap a),
+        dl    :: !(IntMap NodeLevel)
     } deriving (Eq, Ord, Show)
 
 -- Find out whether two terms are equal modulo "normal form", after adding them to a graph
@@ -42,6 +42,14 @@ sameNf rg t1 t2 =
       NF i1' = getNf g2 i1
   in
     i1' == i2
+
+addTermsAndCompareNf :: Ord a => RGraph a -> UTerm a -> UTerm a -> (RGraph a, NodeIndex, NodeIndex)
+addTermsAndCompareNf rg t1 t2 =
+  let (g1, NF i1) = findOrAddNf rg t1
+      (g2, NF i2) = findOrAddNf g1 t2
+      NF i1' = getNf g2 i1
+  in
+    (g2, i1', i2)
 
 -- Convenience, for testing. Return a term in normal form.
 extractTerm :: RGraph a -> NodeIndex -> UTerm a

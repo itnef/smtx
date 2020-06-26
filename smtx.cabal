@@ -4,10 +4,10 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 4326dbb87cbb77cbd0701f1e9a04bab3532f746cde20e226b8ecd559571dea7c
+-- hash: 8296d360b8c03a4f416225ccd6c1400da739fd642898883407e007616d89b65e
 
 name:           smtx
-version:        0.2.0.0
+version:        0.2.1.0
 synopsis:       My first SMT solver
 description:    Please see the README on GitHub at <https://github.com/itnef/smtx#readme>
 category:       Logic
@@ -37,6 +37,7 @@ library
       MySMT.Core
       MySMT.DataTypes
       MySMT.DataTypes.Solver
+      MySMT.DataTypes.TheorySolver
       MySMT.Input.FileRead
       MySMT.Input.Input
       MySMT.Output.PPrintInstances

@@ -1,12 +1,14 @@
+{-# LANGUAGE StrictData #-}
+
 module MySMT.DataTypes.Solver where
 
 import MySMT.DataTypes
 
 import qualified Data.Set as S
 
-import Data.IntMap (IntMap)
+import Data.IntMap.Strict (IntMap)
 import Data.IntSet (IntSet)
-import qualified Data.IntMap as IM
+import qualified Data.IntMap.Strict as IM
 
 import System.Random (StdGen())
 import DebugOutput.PPrint
@@ -16,13 +18,14 @@ type TraceableClause a = (Clause a, Clause a)
 -- The internal data structures use Int for clause numbers.
 data Problem a =
   Problem {
-    contents :: [TraceableClause Int],
-    antecedents :: IntMap Antecedent,
-    partialAssignment :: IntMap Bool,
-    decisionLevels :: IntMap Int,
-    unassignedVariables :: [Int],
-    hidingLemmata :: IntSet,
-    labelMap :: IntMap a
+    contents :: ![TraceableClause Int],
+    antecedents    :: !(IntMap Antecedent),
+    partialAssignment   :: !(IntMap Bool),
+    decisionLevels      :: !(IntMap Int),
+    unassignedVariables :: ![Int],
+    hidingLemmata       :: !IntSet,
+    labelMap            :: !(IntMap a),
+    current             :: !(IntMap Bool)
   } deriving (Show)
 
 data Antecedent = DecisionPoint  { literal :: (Int, Bool), jumpTarget :: Int }
@@ -31,9 +34,13 @@ data Antecedent = DecisionPoint  { literal :: (Int, Bool), jumpTarget :: Int }
 
 data PropagationResult a =
     Unchanged
-  | Propagated { getProblem :: Problem a }
+  | Propagated { getProblem :: Problem a, getNewAssignments :: IntMap Bool }
   | Conflict   { getInfo    :: ConflictInfo }
   deriving (Show)
+
+newtype ProgressInfo = ProgressInfo { stackString :: String }
+initialProgressInfo :: ProgressInfo
+initialProgressInfo = ProgressInfo { stackString = "" }
 
 data ConflictInfo = ConflictInfo {
     variables :: S.Set Int,
@@ -58,5 +65,13 @@ data SolverState a =
     settings :: SolverSettings
   } deriving (Show)
 
-data SolverSettings = SolverSettings { initRandgen :: StdGen, shuffle :: Bool }
+data SolverSettings = SolverSettings
+  { initRandgen :: StdGen
+  -- Shuffle variables initially?
+  , shuffle :: Bool
+  -- Shuffle remaining variables at each recursive call?
+  , reshuffle :: Bool
+  -- Decimate clauses?
+  , decimate :: Maybe Int
+   }
   deriving (Show)

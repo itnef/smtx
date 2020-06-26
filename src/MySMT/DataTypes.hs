@@ -3,7 +3,10 @@
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FunctionalDependencies #-}
+{-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE TupleSections #-}
 
 module MySMT.DataTypes where
 
@@ -24,8 +27,20 @@ satConjToBool (SatConjFalse _) = False
 newtype AssociatedInfo a = AssociatedInfo ( M.Map Int Int )
   deriving (Eq, Show)
 
+newtype Opaque a = Opaque { unOpaque :: a }
+  deriving (Ord, Eq, Show)
+
 class Theory a where
   satConj :: forall (w :: * -> *) . (MonadWriter [(LogLevel, String)] w) => [((a, Int), Bool)] -> w SatConjResult
+
+class Theory a => TheoryIncremental a s | a -> s where
+  satConjIncremental :: forall (w :: * -> *). (MonadWriter [(LogLevel, String)] w) => s -> [Literal (a, Int)] -> w (SatConjResult, Maybe s)
+  -- Default implementation using non-incremental satConj
+  satConjIncremental whatever xs = fmap (,Just whatever) (satConj xs)
+  incrementalInit :: s
+  -- standardClauses :: [Clause a]
+  -- Override in instance declaration
+  -- standardClauses = []
 
 -- Evaluate only the Result, for testing purposes
 satConjResult :: (Theory a) => [((a, Int), Bool)] -> SatConjResult
@@ -36,7 +51,7 @@ satConjResult = fst . runWriter . satConj
 type Literal a = (a, Bool)
 type Clause a = [Literal a]
 newtype CNF a = CNF { clauses :: [Clause a] }
-  deriving (Show, Generic)
+  deriving (Show, Generic, Functor)
 
 -- Quantifier-free Boolean expressions, to be used at input level
 data BoolExprNAryOp = And | Or
@@ -47,7 +62,7 @@ data BoolExpr a =
           NAry BoolExprNAryOp [BoolExpr a]
         | Binary BoolExprBinaryOp (BoolExpr a) (BoolExpr a)
         | Not (BoolExpr a)
-        | PosLit a 
+        | PosLit a
         | TruthVal Bool
   deriving (Show, Ord, Eq, Functor, Generic)
 
@@ -102,5 +117,5 @@ isUnsat _ = False
 mkTerm :: a -> [UTerm a] -> UTerm a
 mkTerm a xs = Term a xs UnspecifiedSort
 
-groundTerm :: a -> UTerm (Either a b)
-groundTerm b = Term (Left b) [] BoolSort
+groundTerm :: forall a b . a -> UTerm (Either a b)
+groundTerm a = Term (Left a) [] BoolSort
