@@ -3,18 +3,20 @@ module Bench where
 import MySMT
 import MySMT.DataTypes.Solver
 import MySMT.Input.FileRead
-import MySMT.DataTypes (satConj) 
+import MySMT.DataTypes (satConjIncremental)
 
 import System.Random
 
 import Criterion.Main
+
+import Convenience
 
 benchDimacs :: String -> String -> Int -> Benchmark
 benchDimacs remark name seed =
   bench ("DIMACS " ++ remark ++ " " ++ name ++ " " ++ show seed) $ whnfIO $ do
     theCnf <- inputDimacsFile name
     let g = mkStdGen seed
-    let (result, _, _) = solveBool (SolverSettings g True) theCnf
+    let (result, _, _) = solveBool ((standardSettings g) {reshuffle=True}) theCnf
     return result
 
 benchFancy :: String -> String -> Int -> Benchmark
@@ -22,7 +24,7 @@ benchFancy remark name seed =
   bench ("Fancy " ++ remark ++ " " ++ name ++ " " ++ show seed) $ whnfIO $ do
     (Just theCnf) <- inputSmtLibFileCNF name 0
     let g = mkStdGen seed
-    let (result, _, _) = solve (SolverSettings g True) satConj theCnf
+    let (result, _, _) = solve ((standardSettings g) {reshuffle=True}) satConjIncremental theCnf
     return result
 
 main :: IO ()

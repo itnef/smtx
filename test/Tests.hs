@@ -40,7 +40,7 @@ g :: StdGen
 g = mkStdGen 42
 
 solverSettings :: SolverSettings
-solverSettings = SolverSettings { initRandgen = g , shuffle = True }
+solverSettings = SolverSettings { initRandgen = g, shuffle = True, reshuffle = True, decimate = Just 3000 }
 
 solveX :: String -> Sat AnyTheoryAtom
 solveX = solve'' solverSettings . prep
@@ -126,7 +126,7 @@ unsatProblems = [
   "(assert (not (= x x)))",
   "(assert (distinct x x))", "(assert (distinct x x x))", "(assert (distinct x y y))",
   "(assert (not (distinct x y)))(assert (distinct x y))"]
-  
+
 satSmtLibQFUFbool :: [String]
 satSmtLibQFUFbool =
   ["(declare-sort U 0)(declare-fun f1 (U U) Bool)(declare-fun c0 () U)(declare-fun c1 () U)(declare-fun c2 () U)(declare-fun c3 () U)" ++
@@ -181,9 +181,9 @@ activeTests = testGroup "Everything" [
           start = ["b", "d"]
       in (take (length start) aw) @?= start
     ),
-    
+
     QC.testProperty "ascList"     (\(StrictlyAscendingList (l :: [String])) -> True ==> L.nub (L.sort l) == l),
-    QC.testProperty "ascListDiff" (\(StrictlyAscendingList (l1 :: [String]), StrictlyAscendingList (l2 :: [String])) -> 
+    QC.testProperty "ascListDiff" (\(StrictlyAscendingList (l1 :: [String]), StrictlyAscendingList (l2 :: [String])) ->
                                     True ==> ascListDiff l2 l1 == l2 \\ l1)
   ],
 
@@ -218,9 +218,9 @@ activeTests = testGroup "Everything" [
  testGroup "UnsatisfiableSMTLIBs" [ testCase "unsat" (isUnsat (solveX p) @?= True) | p <- [unsat_QF_UF_smtlib_fnord] ],
  testGroup "Satisfiable_Bool"   [ testCase "sat" (isSat (solveBool'' solverSettings p) @?= True)     | p <- satisfiable1 ],
  testGroup "Unsatisfiable_Bool" [ testCase "unsat" (isUnsat (solveBool'' solverSettings p) @?= True) | p <- unsatisfiable1 ],
- testGroup "Unsatisfiable QF_UF" [ testCase "smallunsat_QF_UF" (isUnsat (fst3 $ solve solverSettings satConj p) @?= True) | p <- smallunsat_QF_UF ],
- testGroup "Satisfiable QF_UF" [ testCase "smallsat_QF_UF" (isSat (fst3 $ solve solverSettings satConj p) @?= True) | p <- smallsat_QF_UF ],
- testGroup "Unsatisfiable QF_UF" [ testCase "unsat_QF_UF" (isUnsat (fst3 $ solve solverSettings satConj p) @?= True) | p <- unsat_QF_UF ],
+ testGroup "Unsatisfiable QF_UF" [ testCase "smallunsat_QF_UF" (isUnsat (fst3 $ solve solverSettings satConjIncremental p) @?= True) | p <- smallunsat_QF_UF ],
+ testGroup "Satisfiable QF_UF" [ testCase "smallsat_QF_UF" (isSat (fst3 $ solve solverSettings satConjIncremental p) @?= True) | p <- smallsat_QF_UF ],
+ testGroup "Unsatisfiable QF_UF" [ testCase "unsat_QF_UF" (isUnsat (fst3 $ solve solverSettings satConjIncremental p) @?= True) | p <- unsat_QF_UF ],
 
  testGroup "Unsatisfiable QF_UF (directly from SMT-LIB)" [ testCase "sat_QF_UF" (isUnsat (solveX p) @?= True) | p <- unsat_QF_UF_smtlib ],
  testGroup "Satisfiable QF_UF (directly from SMT-LIB)" [ testCase "sat_QF_UF" (isSat (solveX p) @?= True) | p <- sat_QF_UF_smtlib ],
@@ -234,7 +234,7 @@ activeTests = testGroup "Everything" [
  -- Crafted examples from competitions are much more effective at catching errors.
  testGroup "Satisfiable AIM yes" [
      testCase "sat AIM 50" (isSat (solveBool'' solverSettings p) @?= True) | p <- [aim50_1_6_yes_1_1, aim50_1_6_yes_1_4, aim50_2_0_yes_1_1, aim50_2_0_yes_1_2]],
- testGroup "Satisfiable AIM yes" [     
+ testGroup "Satisfiable AIM yes" [
      testCase "sat AIM 100" (isSat (solveBool'' solverSettings p) @?= True) | p <- aim100_2_0_yes],
  testGroup "Unsatisfiable AIM no" [
      testCase "unsat AIM 50" (isUnsat (solveBool'' solverSettings p) @?= True) | p <- [aim50_1_6_no_1, aim50_1_6_no_2, aim50_2_0_no_1, aim50_2_0_no_2, aim50_2_0_no_4]]]
@@ -254,7 +254,7 @@ instance Arbitrary (CNF String) where
 propUnsat1 :: CNF String -> Property
 propUnsat1 (CNF cs) =
   True ==> (isUnsat . (solveBool'' solverSettings)) (CNF ([]:cs))
-  
+
 main :: IO ()
-main = defaultMain (localOption (QuickCheckTests 50) 
+main = defaultMain (localOption (QuickCheckTests 50)
   (testGroup "allTests" [ TestBoolTransform.tests, EqUF.tests, activeTests  ] ))

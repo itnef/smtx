@@ -20,7 +20,7 @@ NORMAL    = '\033[0m'
 BOLD      = '\033[1m'
 HIGHLIGHT = "\033[043m"
 
-timeout = 5 
+timeout = 12
 
 # TODO why does it fail to highlight discrepancies now!?!?!?
 
@@ -30,11 +30,11 @@ timeout = 5
 
 def do_main():
     # for root, dirs, files in os.walk("resources/QF_UF/QG-classification/loops6/", topdown = False):
-    for root, dirs, files in os.walk("resources", topdown = False):
+    for root, dirs, files in os.walk("resources", topdown = True):
 
         for name in files:
-#            if not re.match("^.*smt2$", name):
-#                continue
+            if not re.match("^.*smt2$", name):
+                continue
 #            if not re.match("^.*cnf$", name):
 #                continue
             if re.match("^.*gz$", name):

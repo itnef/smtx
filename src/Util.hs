@@ -61,6 +61,10 @@ leave_n_out :: Int -> [a] -> [[a]]
 leave_n_out n xs =
   [ take i xs ++ drop (i+n) xs | i <- [0..length xs-1-n] ]
 
+leave_some_out :: Int -> [a] -> [[a]]
+leave_some_out n xs =
+  [ take i xs ++ drop (i+n) xs | i <- [0, n .. length xs-1-n] ]
+
 class (Ord a) => MakeNew a where
   -- Precondition: input list must be ascending (dependent types please)
   newStream :: [a] -> [a]

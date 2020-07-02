@@ -13,12 +13,14 @@ import Control.Monad (when)
 import System.Console.ANSI
 import Options.Applicative
 
+import Convenience
+
 handleBoolCNF :: (Ord a, Show a) => Integer -> Int -> CNF a -> IO ()
 handleBoolCNF logLevel gseed cnf = do
 
   let g = mkStdGen gseed
 
-  let (result, _mapping, log) = (solveBool (SolverSettings g True) cnf)  
+  let (result, _mapping, log) = (solveBool (standardSettings g) cnf)
   when (logLevel > 0) $
     sequence_ [ putStrLn line | (ll, line) <- log, ll <= LogLevel logLevel ]
 
@@ -29,14 +31,14 @@ handleBoolCNF logLevel gseed cnf = do
     Unknown -> putStrLn "unknown"
 
 -- (Pretending SMTLIB doesn't have any commands, just expressions:)
-handleFancyCNF :: (Show a, Ord a, Theory a) => Integer -> Int -> CNF a -> IO ()
+handleFancyCNF :: (TheoryIncremental a s, Show a, Ord a, Theory a) => Integer -> Int -> CNF a -> IO ()
 handleFancyCNF logLevel gseed cnf = do
-    
-  let g = mkStdGen gseed
-  
-  let (result, mapping, log) = MySMT.solve (SolverSettings g True) satConj cnf
 
-  when (logLevel > 0) $ 
+  let g = mkStdGen gseed
+
+  let (result, mapping, log) = MySMT.solve (standardSettings g) satConjIncremental cnf
+
+  when (logLevel > 0) $
     sequence_ [ putStrLn line | (ll, line) <- log, ll <= LogLevel logLevel ]
 
   when (logLevel > 1) $ do
@@ -46,7 +48,7 @@ handleFancyCNF logLevel gseed cnf = do
     print result
     setSGR [Reset]
     putStrLn $ "variable mapping number -> original label: " ++ show mapping
-  
+
   -- No matter what loglevel is set, output the result
   case result of
     Sat _ -> putStrLn "sat"
@@ -93,7 +95,7 @@ main = do
         <> header   "smtx - a rudimentary SMT solver" )
 
   options <- execParser opts
-  
+
   let inputFileName = inputFile options
 
   input <- inputDetectInput inputFileName (fromIntegral $ loglevel options)
@@ -101,5 +103,5 @@ main = do
   case input of
     Left boolCNF   -> handleBoolCNF  (fromIntegral $ loglevel options) (fromIntegral $ randomSeed options) boolCNF
     Right fancyCNF -> handleFancyCNF (fromIntegral $ loglevel options) (fromIntegral $ randomSeed options) fancyCNF
-     
+
   return ()
