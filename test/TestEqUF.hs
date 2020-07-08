@@ -184,9 +184,9 @@ fgxy_eq_gxy_x :: RGraph String
 fgxy_eq_gxy_x = addEq' (2, 1) fgxy
 
 term_fad :: UTerm String
-term_fad = (mkTerm "f" [mkTerm "a" [], mkTerm "d" []])
+term_fad = mkTerm "f" [mkTerm "a" [], mkTerm "d" []]
 term_fbc :: UTerm String
-term_fbc = (mkTerm "f" [mkTerm "b" [], mkTerm "c" []])
+term_fbc = mkTerm "f" [mkTerm "b" [], mkTerm "c" []]
 
 fab :: RGraph String
 i_fab :: NodeIndex
@@ -204,9 +204,9 @@ f31 :: RGraph String
 f31 = (flip addEq') f30     ((M.!) (base fab_fcd) "c", (M.!) (base fab_fcd) "d")
 
 term_fcc :: UTerm String
-term_fcc = (mkTerm "f" [mkTerm "c" [], mkTerm "c" []])
+term_fcc = mkTerm "f" [mkTerm "c" [], mkTerm "c" []]
 term_fcfcc :: UTerm String
-term_fcfcc = (mkTerm "f" [mkTerm "c" [], term_fcc])
+term_fcfcc = mkTerm "f" [mkTerm "c" [], term_fcc]
 gr_fcc :: RGraph String
 i_fcc :: NodeIndex
 (gr_fcc, NF i_fcc) = findOrAddNf empty term_fcc
@@ -262,22 +262,22 @@ tests = testGroup "Graph / UF Tests"
       (IM.!) (lbl gxy) 1 @?= "x",
       (IM.!) (lbl gxy) 2 @?= "g",
       
-      extractTerm fgxy i_fgxy @?= (mkTerm "f" [mkTerm "g" [mkTerm "x" [], mkTerm "y" []]]),
+      extractTerm fgxy i_fgxy @?= mkTerm "f" [mkTerm "g" [mkTerm "x" [], mkTerm "y" []]],
       
       -- The choice of "y" over "x" is arbitrary, cosmetically it would be nicer the other way round (the lex. smaller "x" as normal form for "y" after Eq "x" "y")
-      extractTerm gxy_eq_x_y 0 @?= (mkTerm "y" []),
-      extractTerm gxy_eq_x_y 1 @?= (mkTerm "y" []),
-      extractTerm gxy_eq_x_y 2 @?= (mkTerm "g" [mkTerm "y" [], mkTerm "y" []]),
+      extractTerm gxy_eq_x_y 0 @?= mkTerm "y" [],
+      extractTerm gxy_eq_x_y 1 @?= mkTerm "y" [],
+      extractTerm gxy_eq_x_y 2 @?= mkTerm "g" [mkTerm "y" [], mkTerm "y" []],
       
-      extractTerm gxy_eq_gxy_y 0 @?= (mkTerm "y" []),
-      extractTerm gxy_eq_gxy_y 1 @?= (mkTerm "x" []),
-      extractTerm gxy_eq_gxy_y 2 @?= (mkTerm "y" []),
+      extractTerm gxy_eq_gxy_y 0 @?= mkTerm "y" [],
+      extractTerm gxy_eq_gxy_y 1 @?= mkTerm "x" [],
+      extractTerm gxy_eq_gxy_y 2 @?= mkTerm "y" [],
       
-      extractTerm fgxy_eq_gxy_x 0 @?= (mkTerm "y" []),
-      extractTerm fgxy_eq_gxy_x 1 @?= (mkTerm "x" []),
+      extractTerm fgxy_eq_gxy_x 0 @?= mkTerm "y" [],
+      extractTerm fgxy_eq_gxy_x 1 @?= mkTerm "x" [],
       i_fgxy @?= 3,
-      extractTerm fgxy_eq_gxy_x 2 @?= (mkTerm "x" []),
-      extractTerm fgxy_eq_gxy_x 3 @?= (mkTerm "f" [mkTerm "x" []])]
+      extractTerm fgxy_eq_gxy_x 2 @?= mkTerm "x" [],
+      extractTerm fgxy_eq_gxy_x 3 @?= mkTerm "f" [mkTerm "x" []]]
    ),
     testGroup "Build graph term by term" [
     SC.testProperty "add a to empty" prop_addBase1,

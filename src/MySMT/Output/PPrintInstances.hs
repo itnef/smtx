@@ -26,8 +26,8 @@ instance (PPrint a) => PPrint (Sort a) where
 
 instance (PPrint a) => PPrint (UTerm a) where
   prettyPrint (Term f [] _) = prettyPrint f
-  prettyPrint (Term f args UnspecifiedSort) = (prettyPrint f) ++ "(" ++ (concat $ L.intersperse "," (map prettyPrint args)) ++ ")"
-  prettyPrint (Term f args s) = (prettyPrint f) ++ "(" ++ (concat $ L.intersperse "," (map prettyPrint args)) ++ ")" ++ " -> " ++ (prettyPrint s) 
+  prettyPrint (Term f args UnspecifiedSort) = prettyPrint f ++ "(" ++ L.intercalate "," (map prettyPrint args) ++ ")"
+  prettyPrint (Term f args s) = prettyPrint f ++ "(" ++ L.intercalate "," (map prettyPrint args) ++ ") -> " ++ prettyPrint s
 
 instance (PPrint a) => PPrint (BoolExpr a) where
   prettyPrint (NAry And ls) = "(" ++ L.intercalate " /\\ " (map prettyPrint ls) ++ ")"
@@ -53,10 +53,10 @@ instance PPrint Assertion where
     prettyPrint (Assert x) = "Assert " ++ prettyPrint x
 
 instance (PPrint a) => (PPrint [a]) where
-    prettyPrint xs = "[" ++ concat (L.intersperse "," (map prettyPrint xs)) ++ "]"
+    prettyPrint xs = "[" ++ L.intercalate "," (map prettyPrint xs) ++ "]"
 
 instance (PPrint a) => (PPrint (CNF a)) where
-    prettyPrint (CNF xs) = "CNF [" ++ concat (L.intersperse "," (map prettyPrint xs)) ++ "]"
+    prettyPrint (CNF xs) = "CNF [" ++ L.intercalate "," (map prettyPrint xs) ++ "]"
 
 instance PPrint (Statistics a) where
   prettyPrint x = "Statistics { numCalls = " ++ show (numCalls x) ++ " }"

@@ -47,7 +47,7 @@ traceReason !level !combinedMap !vars = do
           (S.unions [ set | var <- S.toList vars
                           , let set = case combinedMap !? var of
                                         Nothing -> S.empty
-                                        Just ls -> S.unions $ map S.fromList $ (flip map) ls $ \case
+                                        Just ls -> S.unions $ map S.fromList $ flip map ls $ \case
                                           (DecisionPoint (v, b) dl) -> [ Left  ((v, not b), dl) ]
                                           (ImplyingClause orig dl) -> [ Right ((v', b'), dl) | (v', b') <- orig, v' /= var ] ])
           
@@ -260,13 +260,13 @@ cdcl satConjFn theoryState exit progressInfo level continuations problem propaga
     -- Visual profile to quickly grasp what is going on:
     -- (lift . tell) [ (LogLevel 46, stackString progressInfo )]
     (lift . tell) [ (LogLevel 49, "cdcl, remaining unassigned: " ++ show (reverse (unassignedVariables problem))) ]
-    (lift . modify) ( \s -> s { statistics = ( statistics s ) { numCalls = numCalls ( statistics s ) + 1 } } )
+    (lift . modify) ( \s -> s { statistics = (statistics s) { numCalls = numCalls (statistics s) + 1 } } )
     stats <- fmap statistics (lift get)
     set   <- fmap settings   (lift get)
-    numLemmata <- fmap (\s -> S.size ( snd ( learnedClauses s ) )) (lift get)
+    numLemmata <- fmap (S.size . snd . learnedClauses) (lift get)
     avgLemmata :: Double <- fmap (\s ->
-                           (L.foldr (+) 0.0 $ L.map (fromIntegral . length) $ S.toList ( snd ( learnedClauses s ) )) /
-                           (fromIntegral $ numLemmata)
+                           L.foldr ((+) . fromIntegral . length) 0.0 (S.toList ( snd (learnedClauses s))) /
+                             fromIntegral numLemmata
                         ) (lift get)
 
     (g1, g2) <- fmap (split . randgen) (lift get)

@@ -37,9 +37,7 @@ data RGraph a =
 -- it means that the inequality conflicts with the equalities that gave rise to the graph.
 sameNf :: (Ord a) => RGraph a -> UTerm a -> UTerm a -> Bool
 sameNf rg t1 t2 =
-  let (g1, NF i1) = findOrAddNf rg t1
-      (g2, NF i2) = findOrAddNf g1 t2
-      NF i1' = getNf g2 i1
+  let (_, i1', i2) = addTermsAndCompareNf rg t1 t2
   in
     i1' == i2
 
@@ -67,7 +65,7 @@ getNf rg i = NF (IM.findWithDefault i i (nf rg))
 
 getEquivalenceClass :: RGraph a -> NodeIndex -> NodeIndexSet
 getEquivalenceClass rg i =
-  IS.insert i (IM.keysSet (IM.filter (== (unNF (getNf rg i))) (nf rg)))
+  IS.insert i (IM.keysSet (IM.filter (== unNF (getNf rg i)) (nf rg)))
 
 getSucc :: RGraph a -> IS.Key -> [Int]
 getSucc rg i = IM.findWithDefault [] i (succ rg)
@@ -134,10 +132,10 @@ findOrAddNf' input (Term w subterms _) =
       [] -> let i = ixmax rg' in
          (Incomplete (rg' { succ = IM.insert i (map unNF subtermIndices) (succ rg')
                            , pred = foldr
-                              (\x predMap -> IM.alter (\case Nothing -> Just (IS.singleton i)
-                                                             (Just set) -> Just (IS.insert i set))
-                                                             x predMap)
-                              (pred rg') (map unNF subtermIndices)
+                              (IM.alter (\case Nothing    -> Just (IS.singleton i)
+                                               (Just set) -> Just (IS.insert i set))
+                               . unNF)
+                              (pred rg') subtermIndices
                            , lbl = IM.insert i w (lbl rg')
                            , dl = IM.insert i (1 + maximum (map ((IM.!) (dl rg') . unNF) subtermIndices)) (dl rg')
                            , ixmax = i + 1 })
@@ -154,7 +152,7 @@ orient rg (NF i) (NF j) =
 
 orientMultiNf :: RGraph a -> Set NF -> (NF, Set NF)
 orientMultiNf rg nfs =
-  let withDl = S.map (\i -> ((dl rg) IM.! (unNF i), i)) nfs
+  let withDl = S.map (\i -> (dl rg IM.! unNF i, i)) nfs
   in
     (snd *** S.map snd) (S.deleteFindMin withDl)
 

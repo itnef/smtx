@@ -59,12 +59,12 @@ instance (Ord a, Eq a, PPrint a, PrintfArg a) => TheoryIncremental (UTermEq (Eit
              in (idx, (i', j'))) (IM.toList (ineqData state))
          
          -- Using the fact that node IDs remain valid after adding more terms (but not equations)
-         scanIneqs =  foldr (\(Eq t1 t2, idx) (graph, ls) -> 
+         scanIneqs =  foldr ((\(Eq t1 t2, idx) (graph, ls) -> 
                                  let (graph', i, j) = addTermsAndCompareNf graph t1 t2
                                  in
-                                    (graph', (idx, (i, j)):ls)
+                                    (graph', (idx, (i, j)):ls)) . fst
                               ) (updatedGraph, [])
-                              (map fst extra_inequalities)
+                              extra_inequalities
          newCheckIneqs = snd scanIneqs
          updatedGraph' = fst scanIneqs
          -- It is necessary to return the graph augmented by the inequality terms as well
@@ -112,7 +112,7 @@ findConflictCore' eqmap ineqmap = do
     equalities   = IM.toList eqmap
     inequalities = IM.toList ineqmap
   subResults <- tryWithFewerEqs equalities inequalities
-  let best = head (smallestFirst ([ map ((,True) . fst) equalities ++ [((,False) . fst) (head inequalities)] ] ++ subResults))
+  let best = head (smallestFirst (( map ((,True) . fst) equalities ++ [((,False) . fst) (head inequalities)] ) : subResults))
   tell [(LogLevel 51, "findConflictCore': " ++ show subResults)]
   return (SatConjFalse best, Nothing)
 
@@ -140,7 +140,7 @@ tryWithFewerEqs eqs ineqs = do
                                    eqs' <- leave_some_out (max 2 ( length eqs `div` 7 )) eqs ++ reverse ( leave_n_out 1 eqs ) ]
       let !subHead = take 1 (filter (\(r, _) -> not (null r)) subresults)
       case subHead of
-            [] -> return [ map (,True) (map fst eqs) ++ reason_ineq ]
-            [(something, logs)] -> do 
+            [] -> return [ map ((,True) .fst) eqs ++ reason_ineq ]
+            [(something, logs)] -> do
               tell logs
               return something

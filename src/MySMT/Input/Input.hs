@@ -29,8 +29,8 @@ boolexprToSmtLib (TruthVal False) = "false"
 boolexprToSmtLib (Not x) = "(not " ++ boolexprToSmtLib x ++ ")"
 boolexprToSmtLib (Binary Iff x y) = "(= " ++ boolexprToSmtLib x ++ " " ++ boolexprToSmtLib y ++ ")"
 boolexprToSmtLib (Binary Implies x y) = "(=> " ++ boolexprToSmtLib x ++ " " ++ boolexprToSmtLib y ++ ")"
-boolexprToSmtLib (NAry And xs) = "(and " ++ concat (L.intersperse " " (map boolexprToSmtLib xs)) ++ ")"
-boolexprToSmtLib (NAry Or xs) = "(or " ++ concat (L.intersperse " " (map boolexprToSmtLib xs)) ++ ")"
+boolexprToSmtLib (NAry And xs) = "(and " ++ unwords (map boolexprToSmtLib xs) ++ ")"
+boolexprToSmtLib (NAry Or xs)  = "(or "  ++ unwords (map boolexprToSmtLib xs) ++ ")"
 
 termToSmtLib :: UTerm String -> String
 termToSmtLib (Term w [] _) = w
@@ -42,7 +42,7 @@ sexprToFakeSmtlib (L [S "assert", foo]) = Ass <$> runExcept (sexprToAssertion fo
 sexprToFakeSmtlib _ = return UnknownSmtlib
 
 sexprToAssertion :: MonadError String m => SExpr -> m Assertion
-sexprToAssertion x = sexprToBoolExpr x >>= return . Assert
+sexprToAssertion x = Assert <$> sexprToBoolExpr x
 
 replace :: SExpr -> SExpr -> SExpr -> SExpr
 replace foo bar x | x == foo = bar
@@ -50,25 +50,25 @@ replace foo bar (L xs) = L (map (replace foo bar) xs)
 replace _ _ x = x
 
 sexprToBoolExpr :: forall (m :: * -> *). MonadError String m => SExpr -> m (BoolExpr AnyTheoryAtom)
-sexprToBoolExpr (L (S "let" : (L bindings) : body : [])) =
+sexprToBoolExpr (L [S "let", L bindings, body]) =
   sexprToBoolExpr (foldl (\x (L [foo, bar]) -> replace foo bar x) body bindings)
-sexprToBoolExpr (L (S "=":x:y:[])) =
+sexprToBoolExpr (L [S "=", x, y]) =
   let anysort = PosLit . EUFAtom <$> liftM2 Eq (sexprToUTerm x) (sexprToUTerm y)
       boolean = liftM2 (Binary Iff) (sexprToBoolExpr x) (sexprToBoolExpr y)
-      groundl = liftM2 (Binary Iff) (sexprToBoolExpr x) ((fmap (PosLit . BoolAtom . Variable . Right)) (sexprToUTerm y))
-      groundr = liftM2 (Binary Iff) (sexprToBoolExpr y) ((fmap (PosLit . BoolAtom . Variable . Right)) (sexprToUTerm x))
+      groundl = liftM2 (Binary Iff) (sexprToBoolExpr x) (fmap (PosLit . BoolAtom . Variable . Right) (sexprToUTerm y))
+      groundr = liftM2 (Binary Iff) (sexprToBoolExpr y) (fmap (PosLit . BoolAtom . Variable . Right) (sexprToUTerm x))
   in
     catchError anysort (\_ -> catchError boolean (\_ -> catchError groundl (const groundr)))
 sexprToBoolExpr (L (S "distinct" : xs)) = do
     terms :: [UTerm String] <- mapM sexprToUTerm xs
-    return $ NAry And $ [ Not $ PosLit $ EUFAtom $ (Eq a b)
+    return $ NAry And $ [ Not . PosLit . EUFAtom $ Eq a b
                         | i <- [0..length terms-1]
-                        , j <- [0..i-1]
                         , let a = (L.!!) terms i
+                        , j <- [0..i-1]
                         , let b = (L.!!) terms j ]
-sexprToBoolExpr (L (S "not":x:[])) = sexprToBoolExpr x >>= return . Not
-sexprToBoolExpr (L (S "and":xs))   = mapM sexprToBoolExpr xs >>= return . NAry And
-sexprToBoolExpr (L (S "or":xs))    = mapM sexprToBoolExpr xs >>= return . NAry Or
+sexprToBoolExpr (L [S "not", x])   = Not      <$>      sexprToBoolExpr x
+sexprToBoolExpr (L (S "and":xs))   = NAry And <$> mapM sexprToBoolExpr xs
+sexprToBoolExpr (L (S "or":xs))    = NAry Or  <$> mapM sexprToBoolExpr xs
 sexprToBoolExpr (S "true") = return (TruthVal True)
 sexprToBoolExpr (S "false") = return (TruthVal False)
 sexprToBoolExpr (S foo) = return (PosLit $ BoolAtom (Variable (Left foo)))
@@ -77,7 +77,7 @@ sexprToBoolExpr x = throwError ("sexprToBoolExpr " ++ show x)
 
 sexprToUTerm :: MonadError String m => SExpr -> m (UTerm String)
 sexprToUTerm (S w) = return (mkTerm w [])
-sexprToUTerm (L ((S h):t)) = mapM sexprToUTerm t >>= return . \x -> mkTerm h x
+sexprToUTerm (L ((S h):t)) = mkTerm h <$> mapM sexprToUTerm t
 sexprToUTerm x = throwError ("sexprToUTerm " ++ show x)
 
 data SExpr = L [SExpr]
@@ -135,10 +135,10 @@ sColonThing :: ReadP SExpr
 sColonThing = fmap C (char ':' *> sTokenLike)
 
 sMultiLineString :: ReadP SExpr
-sMultiLineString = fmap M (char '|' *> many (satisfy (\c -> c /= '|')) <* char '|')
+sMultiLineString = fmap M (char '|' *> many (satisfy (/= '|')) <* char '|')
 
 sComment :: ReadP Char
-sComment = char ';' >> many (satisfy (\c -> c /= '\n')) >> eol
+sComment = char ';' >> many (satisfy (/= '\n')) >> eol
 
 skipSpacesX :: ReadP ()
 skipSpacesX = skipSpaces >> many sComment >> skipSpaces
@@ -162,19 +162,19 @@ sContestCNF = fmap catMaybes (sLine `sepBy` eol <* eof)
 -- Allowing for one-line whitespace:
 sLine :: ReadP (Maybe [(Integer, Bool)])
 sLine =
-         (fmap (Just . catMaybes)
+         fmap (Just . catMaybes)
                     (
                      (munch (\c -> L.elem c " \t"))
                      *>
                      (sIntLiteral `sepBy` (munch1 (\c -> L.elem c " \t")))
                      <* 
                      (munch1 (\c -> L.elem c " \t") <* char '0')
-                    ))
-          <++ (munch (\c -> c/='\n') >> return Nothing)
+                    )
+          <++ (munch (/= '\n') >> return Nothing)
 
 sIntLiteral :: ReadP (Maybe (Integer, Bool))
 sIntLiteral = do
-  neg <- munch (\c -> c == '-')
+  neg <- munch (== '-')
   num <- fmap reads (munch1 isDigit)
   if null num
      then return Nothing

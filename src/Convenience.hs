@@ -9,4 +9,5 @@ import System.Random
 boringSettings :: SolverSettings
 boringSettings = SolverSettings { initRandgen = mkStdGen 42, shuffle = False, reshuffle = False, decimate = Just 15000 }
 
+standardSettings :: StdGen -> SolverSettings
 standardSettings g = boringSettings { initRandgen = g, shuffle = True, reshuffle = False }

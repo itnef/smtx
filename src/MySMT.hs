@@ -94,7 +94,7 @@ preprocess initialSettings (CNF theClauses)  =
 
       -- Might be useful to guide heuristics
       counts = M.fromListWith (+)
-        (zip (map ((M.!) labelVariableMap) occurrencesList) (repeat 1::[Int]))
+        (zip (map (labelVariableMap M.!) occurrencesList) (repeat 1::[Int]))
 
       -- Find all occurrences
       occurrences  = IM.unionsWith S.union (map gatherIntMap intClauses)

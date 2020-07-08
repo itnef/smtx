@@ -253,7 +253,7 @@ instance Arbitrary (CNF String) where
 
 propUnsat1 :: CNF String -> Property
 propUnsat1 (CNF cs) =
-  True ==> (isUnsat . (solveBool'' solverSettings)) (CNF ([]:cs))
+  True ==> (isUnsat . solveBool'' solverSettings) (CNF ([]:cs))
 
 main :: IO ()
 main = defaultMain (localOption (QuickCheckTests 50)
